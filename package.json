@@ -1,0 +1,16 @@
+{
+  "name": "verblab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Øv på uregelrette engelske verb – ren HTML, CSS og JS",
+  "scripts": {
+    "dev": "node tools/serve.js",
+    "build": "node tools/build.js",
+    "preview": "node tools/serve.js --dist",
+    "pack": "npm run build && node tools/pack.js",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

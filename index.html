@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4338ca">
+<title>VerbLab – øv på uregelrette engelske verb</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='52' font-size='52'>📗</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="#" data-nav="hjem">
+      <span class="brand-mark">VL</span>
+      <span class="brand-name">VerbLab</span>
+    </a>
+
+    <nav class="tabs" aria-label="Hovedmeny">
+      <button type="button" class="tab" data-nav="hjem" aria-current="page">
+        <span class="tab-icon" aria-hidden="true">🏠</span><span class="tab-label">Hjem</span>
+      </button>
+      <button type="button" class="tab" data-nav="skriv">
+        <span class="tab-icon" aria-hidden="true">✍️</span><span class="tab-label">Skriv</span>
+      </button>
+      <button type="button" class="tab" data-nav="flervalg">
+        <span class="tab-icon" aria-hidden="true">🔤</span><span class="tab-label">Flervalg</span>
+      </button>
+      <button type="button" class="tab" data-nav="fremgang">
+        <span class="tab-icon" aria-hidden="true">📈</span><span class="tab-label">Fremgang</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main id="app">
+
+  <!-- ─── Hjem ──────────────────────────────────────────────────────────── -->
+  <section class="screen" id="screen-hjem" hidden>
+    <div class="layout-split">
+      <div>
+        <h1 class="screen-title">Velg uke</h1>
+        <p class="screen-sub">Uregelrette verb – infinitiv, preteritum og perfektum partisipp.</p>
+        <ul class="week-list" id="weekList"></ul>
+      </div>
+
+      <aside class="panel start-panel">
+        <h2 class="panel-title">Start økt</h2>
+        <p class="start-week" id="startWeekName">–</p>
+        <div class="meter" aria-hidden="true"><span id="startWeekBar"></span></div>
+        <p class="start-meta" id="startWeekMeta"></p>
+
+        <label class="field-inline">
+          <span>Verb i økta</span>
+          <select id="testCount">
+            <option value="10">10 verb</option>
+            <option value="20">20 verb</option>
+            <option value="all" selected>Alle i uka</option>
+          </select>
+        </label>
+
+        <button type="button" class="btn btn-primary btn-block" data-nav="skriv">✍️ Skriv selv</button>
+        <button type="button" class="btn btn-ghost btn-block" data-nav="flervalg">🔤 Flervalg</button>
+        <p class="hint-text">Ett poeng per verb. Du får fasit med én gang, og verb du bommer på kommer igjen senere i økta. Trenger du hint, koster det et halvt poeng. Resultatet lagres når økta er fullført.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ─── Økt (øving + test deler samme skjerm) ─────────────────────────── -->
+  <section class="screen" id="screen-okt" hidden>
+    <div class="session">
+      <div class="session-head">
+        <div class="session-meta">
+          <span class="badge" id="sessionMode">Skrivemodus</span>
+          <span class="session-week" id="sessionWeek"></span>
+        </div>
+        <div class="session-stats">
+          <span id="sessionCounter">0 / 0</span>
+          <span class="dot">•</span>
+          <span id="sessionScore">0 riktige</span>
+        </div>
+      </div>
+      <div class="meter meter-lg" aria-hidden="true"><span id="sessionBar"></span></div>
+
+      <form class="card" id="qForm" autocomplete="off" novalidate>
+        <p class="card-kicker" id="qKicker">Bøy verbet</p>
+        <p class="card-word" id="qWord">–</p>
+        <p class="card-translation" id="qTranslation">–</p>
+
+        <div class="choice-sets" id="qChoices" hidden>
+          <div class="choice-set">
+            <span class="field-label" id="qLabelPast">Preteritum <em>(past simple)</em></span>
+            <div class="choices" id="qChoicesPast" role="group" aria-labelledby="qLabelPast"></div>
+            <span class="field-note" id="qChoicePastNote"></span>
+          </div>
+          <div class="choice-set">
+            <span class="field-label" id="qLabelPart">Perfektum partisipp <em>(past participle)</em></span>
+            <div class="choices" id="qChoicesPart" role="group" aria-labelledby="qLabelPart"></div>
+            <span class="field-note" id="qChoicePartNote"></span>
+          </div>
+        </div>
+
+        <div class="answers" id="qAnswers">
+          <label class="field">
+            <span class="field-label">Preteritum <em>(past simple)</em></span>
+            <input type="text" id="qPast" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="I …">
+            <span class="field-note" id="qPastNote"></span>
+          </label>
+          <label class="field">
+            <span class="field-label">Perfektum partisipp <em>(past participle)</em></span>
+            <input type="text" id="qPart" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="I have …">
+            <span class="field-note" id="qPartNote"></span>
+          </label>
+        </div>
+
+        <div class="feedback" id="qFeedback" hidden></div>
+
+        <div class="card-actions">
+          <button type="submit" class="btn btn-primary" id="qSubmit">Sjekk</button>
+          <button type="button" class="btn btn-ghost" id="qHint">Hint −0,5 p</button>
+          <button type="button" class="btn btn-quiet" id="qQuit">Avslutt</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ─── Resultat ──────────────────────────────────────────────────────── -->
+  <section class="screen" id="screen-resultat" hidden>
+    <div class="result">
+      <div class="score-ring" id="scoreRing" style="--pct:0">
+        <div class="score-ring-inner">
+          <strong id="scorePct">0 %</strong>
+          <span id="scoreFrac">0 / 0</span>
+        </div>
+      </div>
+      <h1 class="screen-title" id="resultTitle">Ferdig!</h1>
+      <p class="screen-sub" id="resultSub"></p>
+
+      <div class="panel" id="resultWrongWrap" hidden>
+        <h2 class="panel-title">Disse bommet du på</h2>
+        <ul class="miss-list" id="resultWrong"></ul>
+      </div>
+
+      <div class="result-actions">
+        <button type="button" class="btn btn-primary" id="resultRetryWrong">Øv på feilene</button>
+        <button type="button" class="btn btn-ghost" id="resultAgain">Ta på nytt</button>
+        <button type="button" class="btn btn-quiet" data-nav="hjem">Til forsiden</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Fremgang ──────────────────────────────────────────────────────── -->
+  <section class="screen" id="screen-fremgang" hidden>
+    <h1 class="screen-title">Fremgang</h1>
+    <p class="screen-sub">Alt lagres lokalt i nettleseren din.</p>
+
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="panel">
+      <h2 class="panel-title">Mestring per uke</h2>
+      <ul class="progress-weeks" id="progressWeeks"></ul>
+      <p class="hint-text">Et verb regnes som mestret når du har svart riktig på det 3 ganger på rad i skrivemodus – uten hint. Flervalg teller i treffprosenten, men bygger ikke mestring; der skal formene skrives selv.</p>
+    </div>
+
+    <div class="panel">
+      <h2 class="panel-title">Verb du bør øve mer på</h2>
+      <ul class="miss-list" id="hardList"></ul>
+      <button type="button" class="btn btn-primary" id="practiceHard" hidden>✍️ Øv på de 10 vanskeligste</button>
+    </div>
+
+    <div class="panel">
+      <h2 class="panel-title">Fullførte økter</h2>
+      <ul class="test-log" id="testLog"></ul>
+    </div>
+
+    <div class="panel danger-panel">
+      <h2 class="panel-title">Nullstill</h2>
+      <p class="hint-text">Sletter all lagret fremgang og alle øktresultater.</p>
+      <button type="button" class="btn btn-danger" id="resetProgress">Nullstill fremgang</button>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="js/config.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
