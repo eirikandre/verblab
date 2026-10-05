@@ -15,16 +15,16 @@
 const VERB_CONFIG = {
   uker: [
     {
-      id: "uke-46",
-      navn: "Uke 46",
+      id: "2026-37",
+      navn: "2026 Uke 46",
       verb: [
         ["sell", "sold", "sold", "selge"],
         ["tell", "told", "told", "fortelle"],
       ]
     },
     {
-      id: "uke-47",
-      navn: "Uke 47",
+      id: "2026-38",
+      navn: "2026 Uke 47",
       verb: [
         ["eat", "ate", "eaten", "spise"],
         ["drink", "drank", "drunk", "drikke"],
@@ -32,8 +32,8 @@ const VERB_CONFIG = {
       ]
     },
     {
-      id: "uke-48",
-      navn: "Uke 48",
+      id: "2026-39",
+      navn: "2026 Uke 48",
       verb: [
         ["take", "took", "taken", "ta"],
         ["write", "wrote", "written", "skrive"],
@@ -41,8 +41,8 @@ const VERB_CONFIG = {
       ]
     },
     {
-      id: "uke-49",
-      navn: "Uke 49",
+      id: "2026-41",
+      navn: "2026 Uke 49",
       verb: [
         ["do", "did", "done", "gjøre"],
         ["go", "went", "gone", "gå / dra"],

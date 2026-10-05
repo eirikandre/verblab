@@ -27,6 +27,9 @@
       <button type="button" class="tab" data-nav="flervalg">
         <span class="tab-icon" aria-hidden="true">🔤</span><span class="tab-label">Flervalg</span>
       </button>
+      <button type="button" class="tab" data-nav="spill">
+        <span class="tab-icon" aria-hidden="true">🚴</span><span class="tab-label">Sykkel</span>
+      </button>
       <button type="button" class="tab" data-nav="fremgang">
         <span class="tab-icon" aria-hidden="true">📈</span><span class="tab-label">Fremgang</span>
       </button>
@@ -62,6 +65,7 @@
 
         <button type="button" class="btn btn-primary btn-block" data-nav="skriv">✍️ Skriv selv</button>
         <button type="button" class="btn btn-ghost btn-block" data-nav="flervalg">🔤 Flervalg</button>
+        <button type="button" class="btn btn-ghost btn-block" data-nav="spill">🚴 Sykkelløypa</button>
         <p class="hint-text">Ett poeng per verb. Du får fasit med én gang, og verb du bommer på kommer igjen senere i økta. Trenger du hint, koster det et halvt poeng. Resultatet lagres når økta er fullført.</p>
       </aside>
     </div>
@@ -122,6 +126,58 @@
           <button type="button" class="btn btn-quiet" id="qQuit">Avslutt</button>
         </div>
       </form>
+    </div>
+  </section>
+
+
+  <!-- ─── Sykkelløypa (spillmodus) ─────────────────────────────── -->
+  <section class="screen" id="screen-spill" hidden>
+    <div class="game" id="gameWrap">
+      <canvas id="gameCanvas" aria-label="Sykkelløypa"></canvas>
+
+      <div class="game-progress" aria-hidden="true"><span id="gameBar"></span></div>
+
+      <div class="game-top">
+        <div class="game-side">
+          <span class="game-chip" id="gameCounter">0 / 0</span>
+          <span class="game-chip" id="gameScore">0 poeng</span>
+          <span class="game-tools">
+            <button type="button" class="game-icon" id="gameSound" aria-label="Lyd av/på" aria-pressed="true">🔊</button>
+            <button type="button" class="game-icon" id="gameQuit" aria-label="Avslutt økta">✕</button>
+          </span>
+        </div>
+
+        <div class="game-quest">
+          <p class="game-line">
+            <span class="game-form" id="gameKicker" data-form="preteritum">Preteritum</span>
+            <span class="game-av" id="gameAv">av</span>
+            <strong class="game-word" id="gameWord">–</strong>
+          </p>
+          <p class="game-no" id="gameNo">–</p>
+        </div>
+      </div>
+
+      <div class="game-pad" id="gamePad">
+        <button type="button" class="game-btn" id="gameLeft" aria-label="Til venstre">◀</button>
+        <button type="button" class="game-btn game-btn-jump" id="gameJump" aria-label="Hopp">HOPP</button>
+        <button type="button" class="game-btn game-btn-fast" id="gameFast" aria-label="Hold inne for fart">⏩</button>
+        <button type="button" class="game-btn" id="gameRight" aria-label="Til høyre">▶</button>
+      </div>
+
+      <div class="game-overlay" id="gameOverlay">
+        <div class="game-card">
+          <h1 class="game-title">🚴 Sykkelløypa</h1>
+          <p class="game-lead" id="gameLead">Tre skilt kommer mot deg. Sykle inn i det med riktig bøyning!</p>
+          <ul class="game-keys">
+            <li><kbd>←</kbd><kbd>→</kbd> bytt felt</li>
+            <li><kbd>mellomrom</kbd> hopp – bare for moro skyld</li>
+            <li><kbd>↑</kbd> hold inne for fart når du kan svaret</li>
+            <li><span class="game-touch">På mobil: trykk venstre/høyre side for å styre, midten for å hoppe, og hold ⏩ for fart</span></li>
+          </ul>
+          <button type="button" class="btn btn-primary btn-block" id="gameStart">Start løpet</button>
+          <button type="button" class="btn btn-quiet btn-block" id="gameBack">Tilbake</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -187,6 +243,7 @@
 
 <script src="js/config.js"></script>
 <script src="js/storage.js"></script>
+<script src="js/game.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

@@ -16,8 +16,8 @@
     return;
   }
 
-  const SKJERMER = ["hjem", "okt", "resultat", "fremgang"];
-  const MODUSNAVN = { skriv: "Skrivemodus", flervalg: "Flervalg" };
+  const SKJERMER = ["hjem", "okt", "spill", "resultat", "fremgang"];
+  const MODUSNAVN = { skriv: "Skrivemodus", flervalg: "Flervalg", spill: "Sykkelløypa" };
   const HINT_KOST = 0.5;   // poeng som trekkes når du bruker hint på et verb
 
   let valgtUkeId = Progress.innstilling("sisteUke");
@@ -87,7 +87,7 @@
     SKJERMER.forEach(s => { $("#screen-" + s).hidden = s !== navn; });
     $$(".tab").forEach(t => {
       const aktiv = t.dataset.nav === navn ||
-        (navn === "okt" && økt !== null && t.dataset.nav === økt.modus);
+        ((navn === "okt" || navn === "spill") && økt !== null && t.dataset.nav === økt.modus);
       t.classList.toggle("aktiv", aktiv);
       if (aktiv) t.setAttribute("aria-current", "page");
       else t.removeAttribute("aria-current");
@@ -97,9 +97,10 @@
 
   function naviger(mål) {
     if (MODUSNAVN[mål]) {
-      startØkt(mål, valgtUke());
+      startModus(mål, valgtUke());
       return;
     }
+    if (økt && økt.modus === "spill") Sykkelspill.stopp();
     økt = null;
     if (mål === "hjem") tegnHjem();
     if (mål === "fremgang") tegnFremgang();
@@ -163,15 +164,24 @@
   /** Alle verb på tvers av uker – brukes til å lage svaralternativer. */
   const ALLE_VERB = UKER.flatMap(lagOppgaver);
 
-  function startØkt(modus, uke, egneOppgaver) {
-    let oppgaver = egneOppgaver || lagOppgaver(uke);
-    oppgaver = bland(oppgaver);
+  /** Felles inngang – sykkelløypa har sin egen skjerm, de to andre deler økt-skjermen. */
+  function startModus(modus, uke, egneOppgaver) {
+    if (modus === "spill") startSpill(uke, egneOppgaver);
+    else startØkt(modus, uke, egneOppgaver);
+  }
 
-    const antall = $("#testCount").value;   // gjelder bare hele uker, ikke «øv på feilene»
+  /** Verbene i en økt: blandet, og kuttet til valgt antall når hele uka brukes. */
+  function velgOppgaver(uke, egneOppgaver) {
+    let oppgaver = bland(egneOppgaver || lagOppgaver(uke));
+    const antall = $("#testCount").value;
     if (!egneOppgaver && antall !== "all") {
       oppgaver = oppgaver.slice(0, Math.min(Number(antall), oppgaver.length));
     }
+    return oppgaver;
+  }
 
+  function startØkt(modus, uke, egneOppgaver) {
+    const oppgaver = velgOppgaver(uke, egneOppgaver);
     if (!oppgaver.length) { toast("Ingen verb å øve på."); return; }
 
     sisteOppsett = { modus, uke, egneOppgaver };
@@ -247,7 +257,7 @@
    * Kandidatene er verbets egen andre form, den regelrette -ed-fella og
    * samme form fra andre verb – helst fra samme uke.
    */
-  function lagAlternativer(o, felt) {
+  function lagAlternativer(o, felt, antall = 4) {
     const form = v => (felt === "preteritum" ? v.preteritum : v.partisipp);
     const fasit = form(o);
     const andreFormen = felt === "preteritum" ? o.partisipp : o.preteritum;
@@ -263,7 +273,7 @@
     const valgte = [{ tekst: fasit, riktig: true }];
     pool.forEach(f => {
       const n = normaliser(f);
-      if (valgte.length < 4 && f && !sett.has(n)) {
+      if (valgte.length < antall && f && !sett.has(n)) {
         sett.add(n);
         valgte.push({ tekst: f, riktig: false });
       }
@@ -488,6 +498,195 @@
     naviger("hjem");
   });
 
+  /* ── Sykkelløypa (spillmodus) ─────────────────────────────────────────── */
+
+  /*
+   * Spillet stiller ett spørsmål om gangen: først preteritum, så partisipp av
+   * samme verb. Begge må være riktige for at verbet skal gi poeng – samme regel
+   * som i flervalg, og som der teller svarene i statistikken uten å bygge
+   * mestring (å treffe riktig skilt er gjenkjenning, ikke å produsere formen).
+   */
+
+  const FORMER = [
+    { felt: "preteritum", navn: "Preteritum" },
+    { felt: "partisipp", navn: "Perfektum partisipp" }
+  ];
+
+  let spillLyd = Progress.innstilling("spillLyd") !== false;
+
+  function startSpill(uke, egneOppgaver) {
+    const oppgaver = velgOppgaver(uke, egneOppgaver);
+    if (!oppgaver.length) { toast("Ingen verb å øve på."); return; }
+
+    Sykkelspill.stopp();
+    sisteOppsett = { modus: "spill", uke, egneOppgaver };
+    økt = {
+      modus: "spill",
+      ukeNavn: uke.navn,
+      ukeId: uke.id,
+      kø: oppgaver.slice(),
+      totalt: oppgaver.length,
+      ferdige: 0,
+      poeng: 0,
+      hintAntall: 0,
+      feilListe: [],
+      start: Date.now(),
+      formNr: 0,
+      delsvar: {}
+    };
+
+    $("#gameKicker").textContent = "Klar?";
+    $("#gameKicker").dataset.form = "preteritum";
+    $("#gameAv").hidden = true;
+    $("#gameWord").textContent = uke.navn;
+    $("#gameNo").textContent = oppgaver.length + " verb";
+    $("#gameLead").textContent =
+      `${uke.navn} · ${oppgaver.length} verb. Tre skilt kommer mot deg – styr inn i det med riktig bøyning.`;
+    oppdaterSpillStatus();
+    $("#gameOverlay").hidden = false;
+    settLydIkon();
+
+    visSkjerm("spill");
+    Sykkelspill.forhåndsvis($("#gameCanvas"));   // stillbilde bak startkortet
+  }
+
+  function kjørSpill() {
+    $("#gameOverlay").hidden = true;
+    økt.start = Date.now();
+    Sykkelspill.start({
+      lerret: $("#gameCanvas"),
+      lyd: spillLyd,
+      hentRunde: spillHentRunde,
+      påResultat: spillResultat,
+      påFerdig: spillFerdig
+    });
+  }
+
+  function oppdaterSpillStatus() {
+    if (!økt) return;
+    $("#gameCounter").textContent = `${økt.ferdige} / ${økt.totalt}`;
+    $("#gameScore").textContent = `${poengTekst(økt.poeng)} poeng`;
+    $("#gameBar").style.width = prosent(økt.ferdige, økt.totalt) + "%";
+  }
+
+  function spillHentRunde() {
+    if (!økt || !økt.kø.length) return null;
+    const o = økt.kø[0];
+    const form = FORMER[økt.formNr];
+    const fasit = form.felt === "preteritum" ? o.preteritum : o.partisipp;
+
+    $("#gameKicker").textContent = form.navn;
+    $("#gameKicker").dataset.form = form.felt;
+    $("#gameAv").hidden = false;
+    $("#gameWord").textContent = o.infinitiv;
+    $("#gameNo").textContent = o.norsk;
+    oppdaterSpillStatus();
+
+    return {
+      ord: o.infinitiv,
+      norsk: o.norsk,
+      form: form.navn,
+      fasit,
+      alternativer: lagAlternativer(o, form.felt, 3)
+    };
+  }
+
+  function spillResultat(runde, alt, status) {
+    if (!økt) return;
+    const o = økt.kø[0];
+    const form = FORMER[økt.formNr];
+    økt.delsvar[form.felt] = { ok: status === "riktig", svar: alt ? alt.tekst : "–" };
+
+    if (økt.formNr < FORMER.length - 1) {   // samme verb, neste form
+      økt.formNr++;
+      return;
+    }
+
+    const pastOk = økt.delsvar.preteritum.ok;
+    const partOk = økt.delsvar.partisipp.ok;
+    const alleOk = pastOk && partOk;
+
+    // Statistikk og poeng bare første gang verbet møtes i økta.
+    if (!o.gjentakelse) {
+      Progress.registrer(o.ukeId, o.infinitiv, alleOk, false);
+      if (alleOk) økt.poeng++;
+      else økt.feilListe.push({
+        oppgave: o,
+        svarPast: økt.delsvar.preteritum.svar,
+        svarPart: økt.delsvar.partisipp.svar,
+        pastOk, partOk
+      });
+    }
+
+    økt.kø.shift();
+    if (alleOk) økt.ferdige++;
+    else økt.kø.splice(Math.min(3, økt.kø.length), 0, Object.assign({}, o, { gjentakelse: true }));
+
+    økt.formNr = 0;
+    økt.delsvar = {};
+    oppdaterSpillStatus();
+  }
+
+  function spillFerdig() {
+    Sykkelspill.stopp();
+    if (økt) avsluttØkt();
+  }
+
+  function avsluttSpill() {
+    if (!økt) { naviger("hjem"); return; }
+    Sykkelspill.settPause(true);
+    if (økt.ferdige > 0 && !confirm("Avslutte løpet? Resultatet blir ikke lagret.")) {
+      Sykkelspill.settPause(false);
+      return;
+    }
+    Sykkelspill.stopp();
+    økt = null;
+    naviger("hjem");
+  }
+
+  function settLydIkon() {
+    const b = $("#gameSound");
+    b.textContent = spillLyd ? "🔊" : "🔇";
+    b.setAttribute("aria-pressed", String(spillLyd));
+  }
+
+  $("#gameStart").addEventListener("click", kjørSpill);
+  $("#gameBack").addEventListener("click", () => { økt = null; naviger("hjem"); });
+  $("#gameQuit").addEventListener("click", avsluttSpill);
+  $("#gameLeft").addEventListener("click", () => Sykkelspill.styr(-1));
+  $("#gameRight").addEventListener("click", () => Sykkelspill.styr(1));
+  $("#gameJump").addEventListener("click", () => Sykkelspill.hopp());
+
+  // Fartsknappen holdes inne – både mus og berøring, og slippes uansett hvor
+  // fingeren havner.
+  const fartPå = e => { e.preventDefault(); Sykkelspill.gass(true); };
+  const fartAv = () => Sykkelspill.gass(false);
+  $("#gameFast").addEventListener("pointerdown", fartPå);
+  ["pointerup", "pointercancel", "pointerleave"].forEach(navn =>
+    $("#gameFast").addEventListener(navn, fartAv));
+  window.addEventListener("pointerup", fartAv);
+  $("#gameSound").addEventListener("click", () => {
+    spillLyd = !spillLyd;
+    Progress.innstilling("spillLyd", spillLyd);
+    Sykkelspill.settLyd(spillLyd);
+    settLydIkon();
+  });
+
+  // Pause spillet når fanen legges i bakgrunnen, så ingenting skjer usett.
+  document.addEventListener("visibilitychange", () => {
+    if (økt && økt.modus === "spill" && document.hidden) Sykkelspill.settPause(true);
+  });
+  window.addEventListener("blur", () => {
+    if (økt && økt.modus === "spill") Sykkelspill.settPause(true);
+  });
+  // …og la det gå igjen så snart vinduet er i bruk.
+  const fortsettSpill = () => {
+    if (økt && økt.modus === "spill" && !document.hidden) Sykkelspill.settPause(false);
+  };
+  window.addEventListener("focus", fortsettSpill);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) fortsettSpill(); });
+  $("#gameCanvas").addEventListener("pointerdown", fortsettSpill);
+
   /* ── Resultat ─────────────────────────────────────────────────────────── */
 
   function visResultat(r) {
@@ -520,11 +719,11 @@
 
     $("#resultRetryWrong").hidden = !r.feilListe.length;
     $("#resultRetryWrong").onclick = () => {
-      startØkt(r.modus, { id: r.ukeId, navn: r.ukeNavn + " – feilene" },
+      startModus(r.modus, { id: r.ukeId, navn: r.ukeNavn + " – feilene" },
         r.feilListe.map(f => Object.assign({}, f.oppgave, { gjentakelse: false })));
     };
     $("#resultAgain").onclick = () => {
-      if (sisteOppsett) startØkt(sisteOppsett.modus, sisteOppsett.uke, sisteOppsett.egneOppgaver);
+      if (sisteOppsett) startModus(sisteOppsett.modus, sisteOppsett.uke, sisteOppsett.egneOppgaver);
     };
 
     visSkjerm("resultat");
@@ -573,7 +772,7 @@
 
     const hardBtn = $("#practiceHard");
     hardBtn.hidden = !harde.length;
-    hardBtn.onclick = () => startØkt("skriv", { id: "vanskelige", navn: "Vanskelige verb" },
+    hardBtn.onclick = () => startModus("skriv", { id: "vanskelige", navn: "Vanskelige verb" },
       harde.map(r => ({
         ukeId: r.uke.id, infinitiv: r.verb[0], preteritum: r.verb[1],
         partisipp: r.verb[2], norsk: r.verb[3]

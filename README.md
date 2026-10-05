@@ -28,32 +28,36 @@ npm run pack         # bygger og lager verblab-<versjon>.zip
 npm run clean        # sletter dist/
 ```
 
-`npm run build` slår sammen `js/config.js`, `js/storage.js` og `js/app.js` til
-én `dist/app.min.js`, minifiserer stilarket til `dist/style.min.css` og skriver
-en `dist/index.html` som peker på de to. Det blir tre filer på rundt 12 kB
-gzippet – legg hele `dist/` på en hvilken som helst webserver.
+`npm run build` leser skript- og stilarktaggene ut av `index.html`, slår sammen
+js-filene i samme rekkefølge til én `dist/app.min.js`, minifiserer stilarket til
+`dist/style.min.css` og skriver en `dist/index.html` som peker på de to. Legger du
+til en ny kildefil, er det nok å føre den inn i `index.html` – byggeskriptet har
+ingen egen fil-liste å holde i takt, og stopper med feilmelding hvis en tagg ikke
+lot seg bytte ut. Det blir tre filer på rundt 20 kB gzippet – legg hele `dist/`
+på en hvilken som helst webserver.
 
 Skriptene i `tools/` er ren Node uten avhengigheter utenom esbuild, så det er
 ingenting å vedlikeholde utover `package.json`.
 
 ## Hva appen gjør
 
-To moduser – begge gir fasit underveis, gjentar verbene du ikke får til, og
+Tre moduser – alle gir fasit underveis, gjentar verbene du ikke får til, og
 lagrer resultatet når økta er fullført.
 
 | Modus          | Hva skjer                                                                                                                                                                                                                                                                                                                                                         |
 |----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Skriv selv** | Du skriver begge formene. Ett poeng per verb: full pott for riktig uten hjelp, **et halvt poeng hvis du bruker hint**, null for feil. Hint viser de to første bokstavene i begge formene og kan brukes én gang per verb. Verb du bommer på – eller bruker hint på – kommer igjen senere i økta til de sitter.                                                     |
 | **Flervalg**   | Ingen skriving: hver form har sin egen rad med fire alternativer – én for preteritum og én for perfektum partisipp – så de vurderes hver for seg. Tastatursnarvei 1–4 for preteritum og 5–8 for partisipp. Distraktorene er verbets *andre* form, den regelrette `-ed`-fella og samme form fra andre verb i uka. Ett poeng per verb der begge formene er riktige. |
+| **Sykkelløypa** | Spillmodus i tredjeperson: du sykler nedover en vei med tre felt, og for hvert spørsmål kommer tre skilt mot deg. Styr med **← →** og **sykle inn i** skiltet med riktig form. Hold **↑** inne for å øke farten når du alt vet svaret. **Mellomrom** hopper – det er bare til pynt, for hoppet påvirker ikke svaret. På mobil styrer du ved å trykke på venstre eller høyre side av bildet, hopper ved å trykke i midten, og holder ⏩-knappen for fart. Først preteritum, så partisipp av samme verb; ett poeng når begge er riktige. Teller likt som flervalg. |
 
 **Fremgang** viser mestring per uke, treffprosent, verbene som sitter dårligst
 (med snarvei til å øve på nettopp dem) og logg over fullførte økter med poeng,
 modus og tidsbruk.
 
 Et verb regnes som **mestret** når du har svart riktig på det tre ganger på rad
-i skrivemodus – uten hint. Flervalg teller i treffprosenten og i listen over
-vanskelige verb, men bygger ikke mestring: å kjenne igjen riktig form er lettere
-enn å produsere den. All fremgang lagres lokalt i nettleseren (`localStorage`) –
+i skrivemodus – uten hint. Flervalg og sykkelløypa teller i treffprosenten og i
+listen over vanskelige verb, men bygger ikke mestring: å kjenne igjen riktig
+form er lettere enn å produsere den. All fremgang lagres lokalt i nettleseren (`localStorage`) –
 ingenting sendes noe sted.
 
 Appen er bygget mobil-først: store trykkflater, bunnmeny på telefon og
@@ -91,7 +95,8 @@ index.html        markup for alle skjermene
 css/style.css     stiler, lys/mørk modus, responsiv layout
 js/config.js      ← ukens verb legges inn her
 js/storage.js     lagring og beregning av fremgang (localStorage)
-js/app.js         skjermflyt, skrivemodus, flervalg, resultater
+js/game.js        sykkelløypa – pseudo-3D-motor på Canvas 2D, uten avhengigheter
+js/app.js         skjermflyt, skrivemodus, flervalg, spillmodus, resultater
 tools/build.js    minifisering til dist/
 tools/pack.js     zipper dist/
 tools/serve.js    liten statisk server for lokal testing
