@@ -454,6 +454,29 @@ button, input, select { font: inherit; color: inherit; }
 
 .result-actions { display: grid; gap: 10px; margin-top: 8px; }
 
+.start-nudge {
+  margin: 12px 0 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.next-step { border-color: color-mix(in srgb, var(--brand) 35%, var(--line)); }
+.next-kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin-bottom: 4px;
+}
+.next-step .panel-title { font-size: 18px; margin-bottom: 6px; }
+.next-text { color: var(--ink-soft); font-size: 14px; }
+.next-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.next-actions .btn { flex: 1 1 180px; }
+
 .miss-list { display: grid; gap: 10px; }
 
 .miss-list li {

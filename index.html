@@ -53,6 +53,7 @@
         <p class="start-week" id="startWeekName">–</p>
         <div class="meter" aria-hidden="true"><span id="startWeekBar"></span></div>
         <p class="start-meta" id="startWeekMeta"></p>
+        <p class="start-nudge" id="startNudge"></p>
 
         <label class="field-inline">
           <span>Verb i økta</span>
@@ -193,13 +194,22 @@
       <h1 class="screen-title" id="resultTitle">Ferdig!</h1>
       <p class="screen-sub" id="resultSub"></p>
 
+      <div class="panel next-step" id="nextStep" hidden>
+        <p class="next-kicker">Neste steg</p>
+        <h2 class="panel-title" id="nextTitle"></h2>
+        <p class="next-text" id="nextText"></p>
+        <div class="next-actions">
+          <button type="button" class="btn btn-primary" id="nextPrimary"></button>
+          <button type="button" class="btn btn-ghost" id="nextSecondary" hidden></button>
+        </div>
+      </div>
+
       <div class="panel" id="resultWrongWrap" hidden>
         <h2 class="panel-title">Disse bommet du på</h2>
         <ul class="miss-list" id="resultWrong"></ul>
       </div>
 
       <div class="result-actions">
-        <button type="button" class="btn btn-primary" id="resultRetryWrong">Øv på feilene</button>
         <button type="button" class="btn btn-ghost" id="resultAgain">Ta på nytt</button>
         <button type="button" class="btn btn-quiet" data-nav="hjem">Til forsiden</button>
       </div>
@@ -216,7 +226,7 @@
     <div class="panel">
       <h2 class="panel-title">Mestring per uke</h2>
       <ul class="progress-weeks" id="progressWeeks"></ul>
-      <p class="hint-text">Et verb regnes som mestret når du har svart riktig på det 3 ganger på rad i skrivemodus – uten hint. Flervalg teller i treffprosenten, men bygger ikke mestring; der skal formene skrives selv.</p>
+      <p class="hint-text">Et verb regnes som lært når du har kjent det igjen i flervalg eller sykkelløypa, og mestret når du har svart riktig på det 2 ganger på rad i skrivemodus – uten hint. Lær verbene først, og mestre dem etterpå ved å skrive formene selv.</p>
     </div>
 
     <div class="panel">

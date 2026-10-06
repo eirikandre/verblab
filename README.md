@@ -50,11 +50,25 @@ lagrer resultatet når økta er fullført.
 | **Flervalg**   | Ingen skriving: hver form har sin egen rad med fire alternativer – én for preteritum og én for perfektum partisipp – så de vurderes hver for seg. Tastatursnarvei 1–4 for preteritum og 5–8 for partisipp. Distraktorene er verbets *andre* form, den regelrette `-ed`-fella og samme form fra andre verb i uka. Ett poeng per verb der begge formene er riktige. |
 | **Sykkelløypa** | Spillmodus i tredjeperson: du sykler nedover en vei med tre felt, og for hvert spørsmål kommer tre skilt mot deg. Styr med **← →** og **sykle inn i** skiltet med riktig form. Hold **↑** inne for å øke farten når du alt vet svaret. **Mellomrom** hopper – det er bare til pynt, for hoppet påvirker ikke svaret. På mobil styrer du ved å trykke på venstre eller høyre side av bildet, hopper ved å trykke i midten, og holder ⏩-knappen for fart. Først preteritum, så partisipp av samme verb; ett poeng når begge er riktige. Teller likt som flervalg. |
 
+**Læringsveien.** Appen leder hele tiden mot mestring, men i riktig rekkefølge:
+verbene *læres* først i flervalg eller sykkelløypa, og *mestres* deretter i
+skrivemodus. Forsiden anbefaler modus ut fra hvor langt du har kommet i uka, og
+resultatskjermen foreslår alltid et neste steg:
+
+* Flervalg/sykkelløypa feilfritt → skriv de lærte verbene som ikke er mestret ennå.
+* Mange feil (20 % eller mer) → ta feilene igjen, helst i det andre formatet
+  (flervalg ↔ sykkelløypa). Mange feil i skrivemodus → lær dem i flervalg eller
+  sykkelløypa først.
+* Noen få feil → ta dem en gang til før du går videre.
+* I skrivemodus viser tilbakemeldingen hvor langt verbet er kommet («1 av 2 på
+  rad mot mestring», «Mestret! 🏆»).
+
 **Fremgang** viser mestring per uke, treffprosent, verbene som sitter dårligst
 (med snarvei til å øve på nettopp dem) og logg over fullførte økter med poeng,
 modus og tidsbruk.
 
-Et verb regnes som **mestret** når du har svart riktig på det tre ganger på rad
+Et verb regnes som **lært** når du har kjent det igjen i flervalg eller
+sykkelløypa, og **mestret** når du har svart riktig på det to ganger på rad
 i skrivemodus – uten hint. Flervalg og sykkelløypa teller i treffprosenten og i
 listen over vanskelige verb, men bygger ikke mestring: å kjenne igjen riktig
 form er lettere enn å produsere den. All fremgang lagres lokalt i nettleseren (`localStorage`) –

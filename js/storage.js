@@ -2,15 +2,19 @@
  * VerbLab – lagring av fremgang (localStorage)
  * ----------------------------------------------------------------------------
  * Datamodell:
- *   verb:   { "<ukeId>::<infinitiv>": { riktig, feil, rekke, sistSett } }
+ *   verb:   { "<ukeId>::<infinitiv>": { riktig, feil, rekke, kjent, sistSett } }
  *   tester: [ { ukeId, ukeNavn, modus, poeng, totalt, sekunder, tid } ]
  *
  * Poeng er ikke nødvendigvis heltall: hint gir halv uttelling.
+ *
+ * Læringsveien: et verb er først *lært* når du har kjent det igjen i flervalg
+ * eller sykkelløypa (`kjent`), og *mestret* når du har skrevet det riktig
+ * MESTRET_REKKE ganger på rad i skrivemodus uten hint (`rekke`).
  */
 
 const Progress = (() => {
   const KEY = "verblab.fremgang.v1";
-  const MESTRET_REKKE = 3;   // riktige på rad før et verb regnes som mestret
+  const MESTRET_REKKE = 2;   // riktige på rad før et verb regnes som mestret
 
   const tomState = () => ({ verb: {}, tester: [], innstillinger: {} });
 
@@ -44,8 +48,9 @@ const Progress = (() => {
 
   /**
    * Registrer ett svar. `riktig` = begge former riktig på første forsøk.
-   * `tellerMestring` = false for flervalg: svaret teller i statistikken, men
-   * bygger ikke mestringsrekka (det krever at du skriver formene selv).
+   * `tellerMestring` = false for flervalg og sykkelløypa: svaret teller i
+   * statistikken, men bygger ikke mestringsrekka (det krever at du skriver
+   * formene selv). I stedet avgjør det om verbet regnes som lært.
    */
   function registrer(ukeId, infinitiv, riktig, tellerMestring = true) {
     const k = nøkkel(ukeId, infinitiv);
@@ -57,12 +62,19 @@ const Progress = (() => {
       s.feil++;
       s.rekke = 0;
     }
+    if (!tellerMestring) s.kjent = riktig;
     s.sistSett = Date.now();
     state.verb[k] = s;
     skriv();
   }
 
   const erMestret = (ukeId, infinitiv) => forVerb(ukeId, infinitiv).rekke >= MESTRET_REKKE;
+
+  /** Lært = kjent igjen i flervalg/sykkelløypa, eller allerede skrevet riktig. */
+  const erLært = (ukeId, infinitiv) => {
+    const s = forVerb(ukeId, infinitiv);
+    return !!s.kjent || s.rekke > 0;
+  };
 
   /** Andel mestrede verb i en uke, 0–1. */
   function ukeMestring(uke) {
@@ -129,7 +141,7 @@ const Progress = (() => {
   }
 
   return {
-    MESTRET_REKKE, forVerb, registrer, erMestret, ukeMestring,
+    MESTRET_REKKE, forVerb, registrer, erMestret, erLært, ukeMestring,
     lagreØkt, økter, besteØkt, andel, vanskeligste, totalt, innstilling, nullstill
   };
 })();

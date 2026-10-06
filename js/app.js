@@ -19,6 +19,8 @@
   const SKJERMER = ["hjem", "okt", "spill", "resultat", "fremgang"];
   const MODUSNAVN = { skriv: "Skrivemodus", flervalg: "Flervalg", spill: "Sykkelløypa" };
   const HINT_KOST = 0.5;   // poeng som trekkes når du bruker hint på et verb
+  const MANGE_FEIL = 0.2;  // andel feil fra og med dette regnes som «mange» i neste steg
+  const REKKE = Progress.MESTRET_REKKE;
 
   let valgtUkeId = Progress.innstilling("sisteUke");
   if (!UKER.some(u => u.id === valgtUkeId)) valgtUkeId = UKER[0].id;
@@ -130,7 +132,7 @@
             <span class="week-pct">${prosent(andel, 1)} %</span>
           </span>
           <span class="meter"><span style="width:${andel * 100}%"></span></span>
-          <span class="week-sub">${uke.verb.length} verb · ${uke.verb.filter(v => Progress.erMestret(uke.id, v[0])).length} mestret</span>
+          <span class="week-sub">${uke.verb.length} verb · ${uke.verb.filter(v => Progress.erLært(uke.id, v[0])).length} lært · ${uke.verb.filter(v => Progress.erMestret(uke.id, v[0])).length} mestret</span>
         </button>`;
       liste.appendChild(li);
     });
@@ -151,6 +153,41 @@
     $("#startWeekMeta").textContent =
       `${uke.verb.length} verb · ${prosent(andel, 1)} % mestret` +
       (beste ? ` · beste økt ${prosent(beste.poeng, beste.totalt)} %` : " · ingen økt fullført");
+
+    visAnbefaling(uke);
+  }
+
+  /*
+   * Læringsveien på forsiden: nye verb læres først i flervalg eller
+   * sykkelløypa, og først når de er lært, er skrivemodus og mestring neste steg.
+   * Anbefalt modus får hovedknappen.
+   */
+  function visAnbefaling(uke) {
+    const oppgaver = lagOppgaver(uke);
+    const ulærte = oppgaver.filter(o => !Progress.erLært(o.ukeId, o.infinitiv)).length;
+    const igjen = oppgaver.filter(o => !Progress.erMestret(o.ukeId, o.infinitiv)).length;
+
+    let anbefalt, tekst;
+    if (ulærte) {
+      anbefalt = "flervalg";
+      tekst = ulærte === oppgaver.length
+        ? "Nye verb? Lær dem først i flervalg eller sykkelløypa – så skriver du dem etterpå."
+        : `${ulærte} av ${oppgaver.length} verb er ikke lært ennå. Ta dem i flervalg eller sykkelløypa først.`;
+    } else if (igjen) {
+      anbefalt = "skriv";
+      tekst = `Du kjenner alle verbene – nå er du klar for mestring! Skriv dem riktig ${REKKE} ganger ` +
+        `på rad uten hint. ${igjen} verb igjen.`;
+    } else {
+      anbefalt = "skriv";
+      tekst = "🏆 Alle verbene i uka er mestret! Velg en ny uke, eller skriv dem igjen for å holde dem ved like.";
+    }
+
+    $("#startNudge").textContent = tekst;
+    $$(".start-panel [data-nav]").forEach(b => {
+      const hoved = b.dataset.nav === anbefalt;
+      b.classList.toggle("btn-primary", hoved);
+      b.classList.toggle("btn-ghost", !hoved);
+    });
   }
 
   /* ── Økt ──────────────────────────────────────────────────────────────── */
@@ -189,6 +226,7 @@
       modus,
       ukeNavn: uke.navn,
       ukeId: uke.id,
+      oppgaver,
       kø: oppgaver.slice(),
       totalt: oppgaver.length,
       ferdige: 0,
@@ -397,7 +435,7 @@
       fb.textContent = `Riktig – men hint koster ${poengTekst(HINT_KOST)} poeng, så verbet kommer igjen.`;
     } else if (alleOk) {
       fb.className = "feedback ok";
-      fb.textContent = "Riktig! +1 poeng";
+      fb.textContent = "Riktig! +1 poeng" + (o.gjentakelse ? "" : rekkeTekst(o));
     } else {
       fb.className = "feedback nei";
       fb.innerHTML = `Fasit: <strong>${o.infinitiv} – ${o.preteritum} – ${o.partisipp}</strong>`;
@@ -408,6 +446,14 @@
     økt.fase = "fasit";
     økt.sisteRiktig = alleOk && !økt.hintBrukt;
     oppdaterØktStatus();
+  }
+
+  /** «· 1 av 2 på rad» eller «· Mestret! 🏆» rett etter et riktig svar i skrivemodus. */
+  function rekkeTekst(o) {
+    const rekke = Progress.forVerb(o.ukeId, o.infinitiv).rekke;
+    if (rekke === REKKE) return " · Mestret! 🏆";
+    if (rekke > REKKE) return " · fortsatt mestret";
+    return ` · ${rekke} av ${REKKE} på rad mot mestring`;
   }
 
   function merkFelt(inputSel, noteSel, ok, fasit) {
@@ -442,7 +488,8 @@
       totalt: økt.totalt,
       hintAntall: økt.hintAntall,
       sekunder,
-      feilListe: økt.feilListe
+      feilListe: økt.feilListe,
+      oppgaver: økt.oppgaver
     };
     Progress.lagreØkt({
       ukeId: resultat.ukeId,
@@ -524,6 +571,7 @@
       modus: "spill",
       ukeNavn: uke.navn,
       ukeId: uke.id,
+      oppgaver,
       kø: oppgaver.slice(),
       totalt: oppgaver.length,
       ferdige: 0,
@@ -717,16 +765,132 @@
       ul.appendChild(li);
     });
 
-    $("#resultRetryWrong").hidden = !r.feilListe.length;
-    $("#resultRetryWrong").onclick = () => {
-      startModus(r.modus, { id: r.ukeId, navn: r.ukeNavn + " – feilene" },
-        r.feilListe.map(f => Object.assign({}, f.oppgave, { gjentakelse: false })));
-    };
+    visNesteSteg(r);
     $("#resultAgain").onclick = () => {
       if (sisteOppsett) startModus(sisteOppsett.modus, sisteOppsett.uke, sisteOppsett.egneOppgaver);
     };
 
     visSkjerm("resultat");
+  }
+
+  function øvPåFeilene(r, modus) {
+    startModus(modus, { id: r.ukeId, navn: r.ukeNavn.replace(/ – feilene$/, "") + " – feilene" },
+      r.feilListe.map(f => Object.assign({}, f.oppgave, { gjentakelse: false })));
+  }
+
+  /*
+   * Neste steg leder mot mestring, men i riktig rekkefølge: verbene læres
+   * først i flervalg eller sykkelløypa (gjenkjenning), og først når de sitter
+   * der, foreslås skrivemodus – der et verb er mestret etter REKKE feilfrie
+   * svar på rad.
+   */
+  const ANNET_FORMAT = { flervalg: "spill", spill: "flervalg" };
+  const KNAPP = { skriv: "✍️ Skriv selv", flervalg: "🔤 Flervalg", spill: "🚴 Sykkelløypa" };
+
+  const detDem = n => (n === 1 ? "det" : "dem");
+  const ikkeMestret = liste => liste.filter(o => !Progress.erMestret(o.ukeId, o.infinitiv));
+
+  /** Uka resultatet hører til – null for samlinger som «Vanskelige verb». */
+  const ukeFor = r => UKER.find(u => u.id === r.ukeId) || null;
+
+  function skrivØkt(r, oppgaver) {
+    const uke = ukeFor(r);
+    startModus("skriv", uke || { id: r.ukeId, navn: r.ukeNavn }, oppgaver);
+  }
+
+  function nesteEtterGjenkjenning(r) {
+    const feil = r.feilListe.length;
+    const annet = ANNET_FORMAT[r.modus];
+
+    if (!feil) {
+      // Alle lærte verb i uka som ikke er mestret ennå – også fra tidligere økter.
+      const uke = ukeFor(r);
+      const klare = uke
+        ? ikkeMestret(lagOppgaver(uke)).filter(o => Progress.erLært(o.ukeId, o.infinitiv))
+        : ikkeMestret(r.oppgaver);
+      if (!klare.length) {
+        return {
+          tittel: "Feilfritt – og alt er mestret 🏆",
+          tekst: "Du har allerede mestret disse verbene i skrivemodus. Velg en ny uke på forsiden.",
+          hoved: ["Til forsiden", () => naviger("hjem")]
+        };
+      }
+      return {
+        tittel: "Feilfritt – nå er du klar for mestring!",
+        tekst: `Du kjenner igjen verbene. Siste steg er å skrive dem selv: får du et verb riktig ` +
+          `${REKKE} ganger på rad uten hint, er det mestret. ${klare.length} verb er klare for skrivemodus.`,
+        hoved: [`✍️ Skriv ${klare.length} verb`, () => skrivØkt(r, klare)]
+      };
+    }
+
+    if (feil / r.totalt >= MANGE_FEIL) {
+      return {
+        tittel: "Disse trenger en runde til",
+        tekst: `${feil} av ${r.totalt} verb satt ikke. Ta ${detDem(feil)} igjen – gjerne i ` +
+          `${MODUSNAVN[annet].toLowerCase()} denne gangen, så møter du ${detDem(feil)} på en ny måte. ` +
+          "Når alt sitter, er du klar for skrivemodus og mestring.",
+        hoved: [`${KNAPP[annet]} med feilene`, () => øvPåFeilene(r, annet)],
+        ekstra: [`${KNAPP[r.modus]} med feilene`, () => øvPåFeilene(r, r.modus)]
+      };
+    }
+
+    return {
+      tittel: "Nesten klar for mestring",
+      tekst: `Bare ${feil} av ${r.totalt} verb satt ikke. Ta ${detDem(feil)} en gang til – ` +
+        "når alt sitter, er neste steg å mestre verbene i skrivemodus.",
+      hoved: ["Øv på feilene", () => øvPåFeilene(r, r.modus)],
+      ekstra: [`${KNAPP[annet]} med feilene`, () => øvPåFeilene(r, annet)]
+    };
+  }
+
+  function nesteEtterSkriv(r) {
+    const feil = r.feilListe.length;
+    const mestret = r.oppgaver.length - ikkeMestret(r.oppgaver).length;
+    const igjen = ikkeMestret(r.oppgaver);
+    const ettUnna = igjen.filter(o => Progress.forVerb(o.ukeId, o.infinitiv).rekke === REKKE - 1).length;
+    const mestretTekst = mestret ? `${mestret} av ${r.oppgaver.length} verb er mestret. ` : "";
+
+    if (feil / r.totalt >= MANGE_FEIL) {
+      return {
+        tittel: "Lær dem først, så skriver du dem",
+        tekst: mestretTekst + `${feil} verb satt ikke. Øv på ${detDem(feil)} i flervalg eller sykkelløypa ` +
+          "først – da er det lettere å skrive dem riktig etterpå.",
+        hoved: ["🔤 Flervalg med feilene", () => øvPåFeilene(r, "flervalg")],
+        ekstra: ["🚴 Sykkelløypa med feilene", () => øvPåFeilene(r, "spill")]
+      };
+    }
+
+    if (!igjen.length) {
+      return {
+        tittel: "Alt mestret! 🏆",
+        tekst: (r.oppgaver.length === 1 ? "Verbet" : r.oppgaver.length === 2 ? "Begge verbene" : `Alle ${r.oppgaver.length} verbene`) +
+          " i økta er mestret. På forsiden ser du hva som er neste uke å ta fatt på.",
+        hoved: ["Til forsiden", () => naviger("hjem")]
+      };
+    }
+
+    return {
+      tittel: mestret ? `${mestret} verb mestret – fortsett!` : "Godt i gang mot mestring",
+      tekst: `Skriv verbene riktig ${REKKE} ganger på rad uten hint, så er de mestret. ` +
+        (ettUnna ? `${ettUnna} av ${igjen.length} som gjenstår er bare én feilfri runde unna.` :
+          `${igjen.length} verb gjenstår.`),
+      hoved: [`✍️ Skriv de ${igjen.length} som gjenstår`, () => skrivØkt(r, igjen)],
+      ekstra: feil ? ["🔤 Feilene i flervalg", () => øvPåFeilene(r, "flervalg")] : null
+    };
+  }
+
+  function visNesteSteg(r) {
+    const f = r.modus === "skriv" ? nesteEtterSkriv(r) : nesteEtterGjenkjenning(r);
+    $("#nextStep").hidden = false;
+    $("#nextTitle").textContent = f.tittel;
+    $("#nextText").textContent = f.tekst;
+    $("#nextPrimary").textContent = f.hoved[0];
+    $("#nextPrimary").onclick = f.hoved[1];
+    $("#nextSecondary").hidden = !f.ekstra;
+    if (f.ekstra) {
+      $("#nextSecondary").textContent = f.ekstra[0];
+      $("#nextSecondary").onclick = f.ekstra[1];
+    }
   }
 
   /* ── Fremgang ─────────────────────────────────────────────────────────── */
@@ -770,13 +934,13 @@
         </li>`).join("")
       : `<li class="tom">Ingen bom registrert ennå. 👏</li>`;
 
+    // Samme læringsvei her: er noen av dem ikke lært, øves de i flervalg først.
+    const hardeOppgaver = harde.map(r => tilOppgave(r.uke.id, r.verb));
+    const hardModus = hardeOppgaver.every(o => Progress.erLært(o.ukeId, o.infinitiv)) ? "skriv" : "flervalg";
     const hardBtn = $("#practiceHard");
     hardBtn.hidden = !harde.length;
-    hardBtn.onclick = () => startModus("skriv", { id: "vanskelige", navn: "Vanskelige verb" },
-      harde.map(r => ({
-        ukeId: r.uke.id, infinitiv: r.verb[0], preteritum: r.verb[1],
-        partisipp: r.verb[2], norsk: r.verb[3]
-      })));
+    hardBtn.textContent = `${KNAPP[hardModus].split(" ")[0]} Øv på de ${harde.length} vanskeligste`;
+    hardBtn.onclick = () => startModus(hardModus, { id: "vanskelige", navn: "Vanskelige verb" }, hardeOppgaver);
 
     $("#testLog").innerHTML = økter.length
       ? økter.slice(0, 12).map(t => {
