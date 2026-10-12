@@ -50,6 +50,15 @@ const VERB_CONFIG = {
       ]
     },
     {
+      id: "2026-42",
+      navn: "2026 Uke 41",
+      verb: [
+        ["draw", "drew", "drawn", "tegne"],
+        ["know", "knew", "known", "vite"],
+        ["fly", "flew", "flown", "fly"],
+      ]
+    },
+    {
       id: "ekstra-01",
       navn: "Ekstra 1 – de aller vanligste",
       verb: [
