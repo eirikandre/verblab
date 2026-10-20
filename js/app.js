@@ -1,7 +1,11 @@
 /*
  * VerbLab – app-logikk
  * ----------------------------------------------------------------------------
- * Skjermer: hjem · økt (øving/test) · resultat · fremgang
+ * Skjermer: hjem · uke · økt (skriv/flervalg) · spill · resultat · fremgang
+ *
+ * Adresser: #  (forsiden) · #uke/<id> · #fremgang. Økter og resultat får ingen
+ * egen adresse – de vises oppå siden de ble startet fra, og «tilbake» fra dem
+ * går dit.
  */
 
 (() => {
@@ -16,21 +20,24 @@
     return;
   }
 
-  const SKJERMER = ["hjem", "okt", "spill", "resultat", "fremgang"];
+  const SKJERMER = ["hjem", "uke", "okt", "spill", "resultat", "fremgang", "personvern"];
   const MODUSNAVN = { skriv: "Skrivemodus", flervalg: "Flervalg", spill: "Sykkelløypa" };
   const HINT_KOST = 0.5;   // poeng som trekkes når du bruker hint på et verb
   const MANGE_FEIL = 0.2;  // andel feil fra og med dette regnes som «mange» i neste steg
   const REKKE = Progress.MESTRET_REKKE;
 
-  let valgtUkeId = Progress.innstilling("sisteUke");
-  if (!UKER.some(u => u.id === valgtUkeId)) valgtUkeId = UKER[0].id;
+  /*
+   * Ekstrapuljene samles for seg. Vanlige uker vises med nyeste først: den
+   * siste i config.js er «denne uka», så nye uker havner øverst av seg selv.
+   */
+  const erEkstra = uke => uke.id.startsWith("ekstra");
+  const VANLIGE = UKER.filter(u => !erEkstra(u)).reverse();
+  const EKSTRA = UKER.filter(erEkstra);
 
   let økt = null;        // aktiv øvings- eller testøkt
   let sisteOppsett = null; // for «Ta på nytt»
 
   /* ── Hjelpere ─────────────────────────────────────────────────────────── */
-
-  const valgtUke = () => UKER.find(u => u.id === valgtUkeId) || UKER[0];
 
   const bland = arr => {
     const a = arr.slice();
@@ -85,11 +92,23 @@
 
   /* ── Navigasjon ───────────────────────────────────────────────────────── */
 
+  function lesRute() {
+    const h = decodeURIComponent(location.hash.replace(/^#\/?/, ""));
+    if (h === "fremgang") return { skjerm: "fremgang" };
+    if (h === "personvern") return { skjerm: "personvern" };
+    if (h.startsWith("uke/")) {
+      const uke = UKER.find(u => u.id === h.slice(4));
+      if (uke) return { skjerm: "uke", uke };
+    }
+    return { skjerm: "hjem" };
+  }
+
   function visSkjerm(navn) {
     SKJERMER.forEach(s => { $("#screen-" + s).hidden = s !== navn; });
+    // Økter og resultat hører til fanen de ble startet fra.
+    const fane = lesRute().skjerm === "fremgang" ? "fremgang" : "hjem";
     $$(".tab").forEach(t => {
-      const aktiv = t.dataset.nav === navn ||
-        ((navn === "okt" || navn === "spill") && økt !== null && t.dataset.nav === økt.modus);
+      const aktiv = t.dataset.nav === fane;
       t.classList.toggle("aktiv", aktiv);
       if (aktiv) t.setAttribute("aria-current", "page");
       else t.removeAttribute("aria-current");
@@ -97,17 +116,26 @@
     window.scrollTo(0, 0);
   }
 
-  function naviger(mål) {
-    if (MODUSNAVN[mål]) {
-      startModus(mål, valgtUke());
-      return;
-    }
+  /** Viser siden adressen peker på – og avbryter en eventuell økt. */
+  function visRute() {
     if (økt && økt.modus === "spill") Sykkelspill.stopp();
     økt = null;
-    if (mål === "hjem") tegnHjem();
-    if (mål === "fremgang") tegnFremgang();
-    visSkjerm(mål);
+    const rute = lesRute();
+    if (rute.skjerm === "uke") tegnUke(rute.uke);
+    else if (rute.skjerm === "fremgang") tegnFremgang();
+    else tegnHjem();
+    visSkjerm(rute.skjerm);
   }
+
+  /** mål: "hjem", "fremgang" eller "uke/<id>". */
+  function naviger(mål) {
+    const hash = mål === "hjem" ? "" : "#" + mål;
+    // Samme adresse gir ingen hashchange – tegn siden på nytt direkte.
+    if (location.hash === hash) visRute();
+    else location.hash = hash;
+  }
+
+  window.addEventListener("hashchange", visRute);
 
   document.addEventListener("click", e => {
     const el = e.target.closest("[data-nav]");
@@ -116,79 +144,141 @@
     naviger(el.dataset.nav);
   });
 
-  /* ── Hjem ─────────────────────────────────────────────────────────────── */
+  /* ── Status og anbefaling ─────────────────────────────────────────────── */
 
-  function tegnHjem() {
-    const liste = $("#weekList");
-    liste.innerHTML = "";
-
-    UKER.forEach(uke => {
-      const andel = Progress.ukeMestring(uke);
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <button type="button" class="week ${uke.id === valgtUkeId ? "valgt" : ""}" data-uke="${uke.id}">
-          <span class="week-top">
-            <span class="week-name">${uke.navn}</span>
-            <span class="week-pct">${prosent(andel, 1)} %</span>
-          </span>
-          <span class="meter"><span style="width:${andel * 100}%"></span></span>
-          <span class="week-sub">${uke.verb.length} verb · ${uke.verb.filter(v => Progress.erLært(uke.id, v[0])).length} lært · ${uke.verb.filter(v => Progress.erMestret(uke.id, v[0])).length} mestret</span>
-        </button>`;
-      liste.appendChild(li);
-    });
-
-    liste.querySelectorAll("[data-uke]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        valgtUkeId = btn.dataset.uke;
-        Progress.innstilling("sisteUke", valgtUkeId);
-        tegnHjem();
-      });
-    });
-
-    const uke = valgtUke();
-    const andel = Progress.ukeMestring(uke);
-    const beste = Progress.besteØkt(uke.id);
-    $("#startWeekName").textContent = uke.navn;
-    $("#startWeekBar").style.width = andel * 100 + "%";
-    $("#startWeekMeta").textContent =
-      `${uke.verb.length} verb · ${prosent(andel, 1)} % mestret` +
-      (beste ? ` · beste økt ${prosent(beste.poeng, beste.totalt)} %` : " · ingen økt fullført");
-
-    visAnbefaling(uke);
+  function ukeStatus(uke) {
+    const oppgaver = lagOppgaver(uke);
+    const lært = oppgaver.filter(o => Progress.erLært(o.ukeId, o.infinitiv)).length;
+    const mestret = oppgaver.filter(o => Progress.erMestret(o.ukeId, o.infinitiv)).length;
+    return { antall: oppgaver.length, lært, mestret, andel: Progress.ukeMestring(uke) };
   }
 
   /*
-   * Læringsveien på forsiden: nye verb læres først i flervalg eller
-   * sykkelløypa, og først når de er lært, er skrivemodus og mestring neste steg.
-   * Anbefalt modus får hovedknappen.
+   * Læringsveien: nye verb læres først i flervalg eller sykkelløypa, og først
+   * når de er lært, er skrivemodus og mestring neste steg.
    */
-  function visAnbefaling(uke) {
-    const oppgaver = lagOppgaver(uke);
-    const ulærte = oppgaver.filter(o => !Progress.erLært(o.ukeId, o.infinitiv)).length;
-    const igjen = oppgaver.filter(o => !Progress.erMestret(o.ukeId, o.infinitiv)).length;
-
-    let anbefalt, tekst;
+  function anbefaling(uke) {
+    const s = ukeStatus(uke);
+    const ulærte = s.antall - s.lært;
+    const igjen = s.antall - s.mestret;
     if (ulærte) {
-      anbefalt = "flervalg";
-      tekst = ulærte === oppgaver.length
-        ? "Nye verb? Lær dem først i flervalg eller sykkelløypa – så skriver du dem etterpå."
-        : `${ulærte} av ${oppgaver.length} verb er ikke lært ennå. Ta dem i flervalg eller sykkelløypa først.`;
-    } else if (igjen) {
-      anbefalt = "skriv";
-      tekst = `Du kjenner alle verbene – nå er du klar for mestring! Skriv dem riktig ${REKKE} ganger ` +
-        `på rad uten hint. ${igjen} verb igjen.`;
-    } else {
-      anbefalt = "skriv";
-      tekst = "🏆 Alle verbene i uka er mestret! Velg en ny uke, eller skriv dem igjen for å holde dem ved like.";
+      return {
+        modus: "flervalg",
+        steg: "laer",
+        tekst: ulærte === s.antall
+          ? "Nye verb! Lær dem først i flervalg eller sykkelløypa."
+          : `${ulærte} av ${s.antall} verb er ikke lært ennå. Lær dem i flervalg eller sykkelløypa først.`
+      };
     }
+    if (igjen) {
+      return {
+        modus: "skriv",
+        steg: "mestre",
+        tekst: `Du kjenner alle verbene – nå skal de mestres ved at du skriver dem selv. ${igjen} verb igjen.`
+      };
+    }
+    return {
+      modus: "skriv",
+      steg: "mestre",
+      tekst: "🏆 Alle verbene er mestret! Skriv dem igjen for å holde dem ved like, eller ta en annen uke."
+    };
+  }
 
-    $("#startNudge").textContent = tekst;
-    $$(".start-panel [data-nav]").forEach(b => {
-      const hoved = b.dataset.nav === anbefalt;
+  /* ── Hjem ─────────────────────────────────────────────────────────────── */
+
+  function ukeKort(uke) {
+    const s = ukeStatus(uke);
+    return `
+      <li>
+        <a class="week" href="#uke/${encodeURIComponent(uke.id)}">
+          <span class="week-top">
+            <span class="week-name">${uke.navn}</span>
+            <span class="week-pct">${s.mestret === s.antall ? "🏆 " : ""}${prosent(s.andel, 1)} % ›</span>
+          </span>
+          <span class="meter"><span style="width:${s.andel * 100}%"></span></span>
+          <span class="week-sub">${s.antall} verb · ${s.lært} lært · ${s.mestret} mestret</span>
+        </a>
+      </li>`;
+  }
+
+  function tegnHjem() {
+    const hovedUke = VANLIGE[0] || UKER[0];
+    const s = ukeStatus(hovedUke);
+    const råd = anbefaling(hovedUke);
+    const verb = hovedUke.verb.map(v => v[0]);
+
+    $("#heroLabel").textContent = VANLIGE.length ? "Denne uka" : "Start her";
+    $("#hero").innerHTML = `
+      <div class="week-top">
+        <span class="hero-name">${hovedUke.navn}</span>
+        <span class="week-pct">${prosent(s.andel, 1)} %</span>
+      </div>
+      <p class="hero-verbs">${verb.slice(0, 6).join(" · ")}${verb.length > 6 ? " …" : ""}</p>
+      <span class="meter"><span style="width:${s.andel * 100}%"></span></span>
+      <p class="week-sub">${s.antall} verb · ${s.lært} lært · ${s.mestret} mestret</p>
+      <p class="start-nudge">${råd.tekst}</p>
+      <div class="hero-actions">
+        <button type="button" class="btn btn-primary" id="heroStart">Fortsett: ${KNAPP[råd.modus]}</button>
+        <a class="btn btn-ghost" href="#uke/${encodeURIComponent(hovedUke.id)}">Se uka</a>
+      </div>`;
+    $("#heroStart").onclick = () => startModus(råd.modus, hovedUke);
+
+    const tidligere = VANLIGE.filter(u => u !== hovedUke);
+    $("#olderWrap").hidden = !tidligere.length;
+    $("#weekList").innerHTML = tidligere.map(ukeKort).join("");
+
+    const ekstra = EKSTRA.filter(u => u !== hovedUke);
+    $("#extraWrap").hidden = !ekstra.length;
+    $("#extraLabel").textContent = `Ekstra · ${ekstra.length} ${ekstra.length === 1 ? "pulje" : "puljer"}`;
+    $("#extraList").innerHTML = ekstra.map(ukeKort).join("");
+  }
+
+  /* ── Uke ──────────────────────────────────────────────────────────────── */
+
+  let åpenUke = null;
+
+  function tegnUke(uke) {
+    åpenUke = uke;
+    const s = ukeStatus(uke);
+    const råd = anbefaling(uke);
+    const beste = Progress.besteØkt(uke.id);
+
+    $("#ukeTitle").textContent = uke.navn;
+    $("#ukeMeta").textContent =
+      `${s.antall} verb · ${prosent(s.andel, 1)} % mestret` +
+      (beste ? ` · beste økt ${prosent(beste.poeng, beste.totalt)} %` : "");
+    $("#ukeBar").style.width = s.andel * 100 + "%";
+
+    $("#ukeVerb").innerHTML = uke.verb.map(v => {
+      const status = Progress.erMestret(uke.id, v[0]) ? "mestret"
+        : Progress.erLært(uke.id, v[0]) ? "lært" : "ny";
+      const merke = { mestret: "🏆 Mestret", lært: "✓ Lært", ny: "Ny" }[status];
+      return `
+        <li>
+          <span class="vl-word">${v[0]}</span>
+          <span class="vl-no">${v[3]}</span>
+          <span class="vl-status" data-status="${status}">${merke}</span>
+        </li>`;
+    }).join("");
+
+    $("#ukeNudge").textContent = råd.tekst;
+    $("#stepLaerStatus").textContent = `${s.lært} av ${s.antall} lært`;
+    $("#stepMestreText").textContent = `Skriv formene selv. Riktig ${REKKE} ganger på rad uten hint, så er verbet mestret.`;
+    $("#stepMestreStatus").textContent = `${s.mestret} av ${s.antall} mestret`;
+    $("#stepLaer").classList.toggle("anbefalt", råd.steg === "laer");
+    $("#stepMestre").classList.toggle("anbefalt", råd.steg === "mestre");
+    $$("#screen-uke [data-modus]").forEach(b => {
+      const hoved = b.dataset.modus === råd.modus;
       b.classList.toggle("btn-primary", hoved);
       b.classList.toggle("btn-ghost", !hoved);
     });
+
+    // Antallsvalget er bare nyttig for de store puljene.
+    $("#testCountWrap").hidden = uke.verb.length <= 10;
   }
+
+  $$("#screen-uke [data-modus]").forEach(b =>
+    b.addEventListener("click", () => { if (åpenUke) startModus(b.dataset.modus, åpenUke); }));
 
   /* ── Økt ──────────────────────────────────────────────────────────────── */
 
@@ -210,7 +300,7 @@
   /** Verbene i en økt: blandet, og kuttet til valgt antall når hele uka brukes. */
   function velgOppgaver(uke, egneOppgaver) {
     let oppgaver = bland(egneOppgaver || lagOppgaver(uke));
-    const antall = $("#testCount").value;
+    const antall = $("#testCountWrap").hidden ? "all" : $("#testCount").value;
     if (!egneOppgaver && antall !== "all") {
       oppgaver = oppgaver.slice(0, Math.min(Number(antall), oppgaver.length));
     }
@@ -539,10 +629,8 @@
   });
 
   $("#qQuit").addEventListener("click", () => {
-    if (!økt) { naviger("hjem"); return; }
-    if (økt.ferdige > 0 && !confirm("Avslutte økta? Resultatet blir ikke lagret.")) return;
-    økt = null;
-    naviger("hjem");
+    if (økt && økt.ferdige > 0 && !confirm("Avslutte økta? Resultatet blir ikke lagret.")) return;
+    visRute();
   });
 
   /* ── Sykkelløypa (spillmodus) ─────────────────────────────────────────── */
@@ -681,15 +769,13 @@
   }
 
   function avsluttSpill() {
-    if (!økt) { naviger("hjem"); return; }
+    if (!økt) { visRute(); return; }
     Sykkelspill.settPause(true);
     if (økt.ferdige > 0 && !confirm("Avslutte løpet? Resultatet blir ikke lagret.")) {
       Sykkelspill.settPause(false);
       return;
     }
-    Sykkelspill.stopp();
-    økt = null;
-    naviger("hjem");
+    visRute();
   }
 
   function settLydIkon() {
@@ -699,7 +785,7 @@
   }
 
   $("#gameStart").addEventListener("click", kjørSpill);
-  $("#gameBack").addEventListener("click", () => { økt = null; naviger("hjem"); });
+  $("#gameBack").addEventListener("click", visRute);
   $("#gameQuit").addEventListener("click", avsluttSpill);
   $("#gameLeft").addEventListener("click", () => Sykkelspill.styr(-1));
   $("#gameRight").addEventListener("click", () => Sykkelspill.styr(1));
@@ -766,6 +852,8 @@
     });
 
     visNesteSteg(r);
+    $("#resultBack").textContent = { uke: "Tilbake til uka", fremgang: "Til fremgang", hjem: "Til forsiden" }[lesRute().skjerm];
+    $("#resultBack").onclick = visRute;
     $("#resultAgain").onclick = () => {
       if (sisteOppsett) startModus(sisteOppsett.modus, sisteOppsett.uke, sisteOppsett.egneOppgaver);
     };
@@ -961,7 +1049,6 @@
   $("#resetProgress").addEventListener("click", () => {
     if (!confirm("Slette all fremgang? Dette kan ikke angres.")) return;
     Progress.nullstill();
-    valgtUkeId = UKER[0].id;
     tegnFremgang();
     toast("Fremgangen er nullstilt.");
   });
@@ -973,6 +1060,5 @@
   const lagretAntall = Progress.innstilling("antallIØkt");
   if (lagretAntall) $("#testCount").value = lagretAntall;
 
-  tegnHjem();
-  visSkjerm("hjem");
+  visRute();
 })();

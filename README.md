@@ -3,7 +3,7 @@
 Liten nettapp for å øve på uregelrette engelske verb. Ren HTML, CSS og JavaScript –
 ingen rammeverk, ingen byggesteg, ingen server nødvendig.
 
-Tjenesten lever på [https://verblab.eidså.no](https://verblab.eidså.no) tilpasset 6 trinn på Flesberg skole
+Tjenesten lever på [https://verblab.eidsa.no](https://verblab.eidsa.no) tilpasset 6 trinn på Flesberg skole
 
 ## Kom i gang
 
@@ -41,6 +41,17 @@ ingenting å vedlikeholde utover `package.json`.
 
 ## Hva appen gjør
 
+**Navigasjon.** Toppmenyen har bare to faner: **Øv** og **Fremgang**.
+
+* **Forsiden** viser *denne uka* øverst (den siste uka i `config.js`) med én
+  «Fortsett»-knapp som starter anbefalt steg. Under ligger tidligere uker med
+  nyeste først, og ekstrapuljene samlet i en gruppe som kan foldes ut.
+* **Ukesiden** (`#uke/<id>`) viser verbene med status (ny, lært, mestret) og de
+  to stegene i fast rekkefølge: **① Lær** (flervalg eller sykkelløypa) og
+  **② Mestre** (skriv selv). Anbefalt steg er fremhevet.
+* Hver uke har sin egen adresse, så tilbakeknappen i nettleseren virker og du
+  kan lenke rett til en uke. Avbryter du en økt, kommer du tilbake dit du startet.
+
 Tre moduser – alle gir fasit underveis, gjentar verbene du ikke får til, og
 lagrer resultatet når økta er fullført.
 
@@ -52,7 +63,7 @@ lagrer resultatet når økta er fullført.
 
 **Læringsveien.** Appen leder hele tiden mot mestring, men i riktig rekkefølge:
 verbene *læres* først i flervalg eller sykkelløypa, og *mestres* deretter i
-skrivemodus. Forsiden anbefaler modus ut fra hvor langt du har kommet i uka, og
+skrivemodus. Forsiden og ukesiden anbefaler steg ut fra hvor langt du har kommet i uka, og
 resultatskjermen foreslår alltid et neste steg:
 
 * Flervalg/sykkelløypa feilfritt → skriv de lærte verbene som ikke er mestret ennå.
@@ -101,6 +112,11 @@ Noen tips:
 * Endrer du `id` på en uke, mister den uka sin lagrede statistikk. Endre gjerne
   `navn` og verblisten, men la `id` stå.
 * Antall uker og antall verb per uke er fritt.
+* **Legg nye uker nederst** blant ukene – den siste vanlige uka vises som
+  «Denne uka» på forsiden.
+* Puljer med `id` som starter på `ekstra` havner i den sammenleggbare
+  «Ekstra»-gruppen i stedet for i ukelista. Valget «Verb i økta» vises bare for
+  puljer med flere enn 10 verb.
 
 ## Filer
 

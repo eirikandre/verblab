@@ -19,16 +19,7 @@
 
     <nav class="tabs" aria-label="Hovedmeny">
       <button type="button" class="tab" data-nav="hjem" aria-current="page">
-        <span class="tab-icon" aria-hidden="true">🏠</span><span class="tab-label">Hjem</span>
-      </button>
-      <button type="button" class="tab" data-nav="skriv">
-        <span class="tab-icon" aria-hidden="true">✍️</span><span class="tab-label">Skriv</span>
-      </button>
-      <button type="button" class="tab" data-nav="flervalg">
-        <span class="tab-icon" aria-hidden="true">🔤</span><span class="tab-label">Flervalg</span>
-      </button>
-      <button type="button" class="tab" data-nav="spill">
-        <span class="tab-icon" aria-hidden="true">🚴</span><span class="tab-label">Sykkel</span>
+        <span class="tab-icon" aria-hidden="true">📗</span><span class="tab-label">Øv</span>
       </button>
       <button type="button" class="tab" data-nav="fremgang">
         <span class="tab-icon" aria-hidden="true">📈</span><span class="tab-label">Fremgang</span>
@@ -39,34 +30,68 @@
 
 <main id="app">
 
-  <!-- ─── Hjem ──────────────────────────────────────────────────────────── -->
+  <!-- ─── Hjem: denne uka øverst, så tidligere uker og ekstrapuljer ───── -->
   <section class="screen" id="screen-hjem" hidden>
+    <h1 class="screen-title">Øv på verb</h1>
+    <p class="screen-sub">Uregelrette verb – infinitiv, preteritum og perfektum partisipp.</p>
+
+    <h2 class="section-label" id="heroLabel">Denne uka</h2>
+    <div class="panel hero" id="hero"></div>
+
+    <div id="olderWrap">
+      <h2 class="section-label">Tidligere uker</h2>
+      <ul class="week-list" id="weekList"></ul>
+    </div>
+
+    <details class="extra-group" id="extraWrap">
+      <summary class="section-label" id="extraLabel">Ekstra</summary>
+      <ul class="week-list" id="extraList"></ul>
+    </details>
+    <p class="page-foot"><a href="#personvern">Personvern</a></p>
+  </section>
+
+  <!-- ─── Uke: verbene og de to stegene Lær → Mestre ───────────────────── -->
+  <section class="screen" id="screen-uke" hidden>
+    <a class="back-link" href="#">← Alle uker</a>
     <div class="layout-split">
       <div>
-        <h1 class="screen-title">Velg uke</h1>
-        <p class="screen-sub">Uregelrette verb – infinitiv, preteritum og perfektum partisipp.</p>
-        <ul class="week-list" id="weekList"></ul>
+        <h1 class="screen-title" id="ukeTitle">–</h1>
+        <p class="screen-sub" id="ukeMeta"></p>
+        <div class="meter" aria-hidden="true"><span id="ukeBar"></span></div>
+        <ul class="verb-list" id="ukeVerb"></ul>
       </div>
 
-      <aside class="panel start-panel">
-        <h2 class="panel-title">Start økt</h2>
-        <p class="start-week" id="startWeekName">–</p>
-        <div class="meter" aria-hidden="true"><span id="startWeekBar"></span></div>
-        <p class="start-meta" id="startWeekMeta"></p>
-        <p class="start-nudge" id="startNudge"></p>
+      <aside class="steps">
+        <p class="start-nudge" id="ukeNudge"></p>
 
-        <label class="field-inline">
+        <div class="panel step" id="stepLaer">
+          <p class="step-kicker"><span class="step-num">1</span>Lær</p>
+          <p class="step-text">Kjenn igjen riktig form blant flere alternativer.</p>
+          <p class="step-status" id="stepLaerStatus"></p>
+          <div class="step-actions">
+            <button type="button" class="btn btn-ghost" data-modus="flervalg">🔤 Flervalg</button>
+            <button type="button" class="btn btn-ghost" data-modus="spill">🚴 Sykkelløypa</button>
+          </div>
+        </div>
+
+        <div class="panel step" id="stepMestre">
+          <p class="step-kicker"><span class="step-num">2</span>Mestre</p>
+          <p class="step-text" id="stepMestreText"></p>
+          <p class="step-status" id="stepMestreStatus"></p>
+          <div class="step-actions">
+            <button type="button" class="btn btn-ghost" data-modus="skriv">✍️ Skriv selv</button>
+          </div>
+        </div>
+
+        <label class="field-inline" id="testCountWrap">
           <span>Verb i økta</span>
           <select id="testCount">
             <option value="10">10 verb</option>
             <option value="20">20 verb</option>
-            <option value="all" selected>Alle i uka</option>
+            <option value="all" selected>Alle</option>
           </select>
         </label>
 
-        <button type="button" class="btn btn-primary btn-block" data-nav="skriv">✍️ Skriv selv</button>
-        <button type="button" class="btn btn-ghost btn-block" data-nav="flervalg">🔤 Flervalg</button>
-        <button type="button" class="btn btn-ghost btn-block" data-nav="spill">🚴 Sykkelløypa</button>
         <p class="hint-text">Ett poeng per verb. Du får fasit med én gang, og verb du bommer på kommer igjen senere i økta. Trenger du hint, koster det et halvt poeng. Resultatet lagres når økta er fullført.</p>
       </aside>
     </div>
@@ -211,7 +236,7 @@
 
       <div class="result-actions">
         <button type="button" class="btn btn-ghost" id="resultAgain">Ta på nytt</button>
-        <button type="button" class="btn btn-quiet" data-nav="hjem">Til forsiden</button>
+        <button type="button" class="btn btn-quiet" id="resultBack">Til forsiden</button>
       </div>
     </div>
   </section>
@@ -245,6 +270,41 @@
       <p class="hint-text">Sletter all lagret fremgang og alle øktresultater.</p>
       <button type="button" class="btn btn-danger" id="resetProgress">Nullstill fremgang</button>
     </div>
+    <p class="page-foot"><a href="#personvern">Personvern</a></p>
+  </section>
+
+  <!-- ─── Personvern ────────────────────────────────────────────────────── -->
+  <section class="screen" id="screen-personvern" hidden>
+    <a class="back-link" href="#">← Til forsiden</a>
+    <h1 class="screen-title">Personvern</h1>
+    <p class="screen-sub">Kort fortalt: VerbLab samler ikke inn personopplysninger. Fremgangen din blir liggende på din egen enhet.</p>
+
+    <div class="panel prose">
+      <h2 class="panel-title">Hva som lagres</h2>
+      <p>For at du skal kunne se fremgangen din, lagrer appen dette i nettleseren på enheten du bruker (<code>localStorage</code>):</p>
+      <ul>
+        <li>hvilke verb du har svart riktig og feil på, og når du sist øvde på dem</li>
+        <li>fullførte økter: uke, modus, poeng og hvor lang tid du brukte</li>
+      </ul>
+      <p>Du oppgir aldri navn, e-post eller annet om deg selv, og det finnes ingen innlogging. Opplysningene sendes ikke til oss eller noen andre, og vi kan ikke se dem.</p>
+    </div>
+
+    <div class="panel prose">
+      <h2 class="panel-title">Ingen sporing</h2>
+      <p>VerbLab bruker ikke informasjonskapsler (cookies), analyseverktøy, reklame eller innhold fra andre nettsteder. Alt appen trenger, lastes fra samme server.</p>
+    </div>
+
+    <div class="panel prose">
+      <h2 class="panel-title">Serverlogg</h2>
+      <p>Som de fleste nettsider kan serveren som leverer VerbLab føre en teknisk logg over forespørsler, med IP-adresse, tidspunkt og hvilken nettleser som ble brukt. Loggen brukes bare til drift og feilsøking, kobles ikke til fremgangen din og deles ikke med andre.</p>
+    </div>
+
+    <div class="panel prose">
+      <h2 class="panel-title">Slik sletter du dataene</h2>
+      <p>Trykk <strong>Nullstill fremgang</strong> nederst på <a href="#fremgang">Fremgang</a>-siden, eller slett nettstedsdata for verblab.eidsa.no i innstillingene i nettleseren. Bruker du privat nettlesing, forsvinner dataene når vinduet lukkes.</p>
+    </div>
+
+    <p class="hint-text">Sist oppdatert 20. oktober 2026.</p>
   </section>
 
 </main>

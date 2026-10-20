@@ -8,6 +8,9 @@
  *   navn        vises i appen
  *   verb        [infinitiv, preteritum, perfektum partisipp, norsk]
  *
+ * Legg nye uker nederst blant ukene: den siste vises som «Denne uka» på
+ * forsiden. Blokker med id som starter på "ekstra" samles i en egen gruppe.
+ *
  * Alternative former skrives med skråstrek: "got/gotten".
  * Da godtas begge deler – og hele strengen – som riktig svar.
  */
