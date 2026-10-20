@@ -1,0 +1,11 @@
+.git
+.github
+.idea
+.DS_Store
+node_modules
+dist
+verblab-*.zip
+verblab-*.tar.gz
+Dockerfile
+.dockerignore
+README.md

@@ -51,11 +51,20 @@ const VERB_CONFIG = {
     },
     {
       id: "2026-42",
-      navn: "2026 Uke 41",
+      navn: "2026 Uke 42",
       verb: [
         ["draw", "drew", "drawn", "tegne"],
         ["know", "knew", "known", "vite"],
         ["fly", "flew", "flown", "fly"],
+      ]
+    },
+    {
+      id: "2026-43",
+      navn: "2026 Uke 43",
+      verb: [
+        ["buy", "bought", "bought", "kjøpe"],
+        ["think", "thought", "thought", "tenke"],
+        ["fight", "fought", "fought", "sloss"],
       ]
     },
     {
@@ -75,7 +84,6 @@ const VERB_CONFIG = {
       navn: "Ekstra 2 – hverdagsverb",
       verb: [
         ["come", "came", "come", "komme"],
-        ["think", "thought", "thought", "tenke"],
         ["give", "gave", "given", "gi"],
         ["find", "found", "found", "finne"],
         ["become", "became", "become", "bli"],
@@ -137,7 +145,6 @@ const VERB_CONFIG = {
       id: "ekstra-06",
       navn: "Ekstra 6 – siste pulje",
       verb: [
-        ["buy", "bought", "bought", "kjøpe"],
         ["wear", "wore", "worn", "ha på seg"],
         ["choose", "chose", "chosen", "velge"],
         ["sleep", "slept", "slept", "sove"],
