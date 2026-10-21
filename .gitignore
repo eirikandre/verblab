@@ -4,3 +4,5 @@ node_modules/
 dist/
 verblab-*.zip
 verblab-*.tar.gz
+.playwright-mcp
+.idea
