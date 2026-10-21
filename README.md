@@ -130,5 +130,6 @@ js/app.js         skjermflyt, skrivemodus, flervalg, spillmodus, resultater
 tools/build.js    minifisering til dist/
 tools/pack.js     zipper dist/
 tools/serve.js    liten statisk server for lokal testing
-public/           kopieres som de er til dist/: robots.txt, sitemap.xml og favicon
+tools/og-image.html  kilden til delingsbildet public/og-image.png
+public/           kopieres som de er til dist/: robots.txt, sitemap.xml, favicon, delingsbilde
 ```
