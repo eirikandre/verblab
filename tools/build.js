@@ -4,6 +4,7 @@
  *   alle <script src="js/…"> i index.html   →  dist/app.min.js
  *   alle <link rel=stylesheet href="css/…"> →  dist/style.min.css
  *   index.html                              →  dist/index.html (peker på de to)
+ *   public/*                                →  dist/ (robots.txt, sitemap, favicon – kopieres som de er)
  *
  * Fillista er ikke skrevet ned her: skriptet leser taggene ut av index.html og
  * beholder rekkefølgen derfra – den samme rekkefølgen nettleseren bruker. Legger
@@ -22,6 +23,7 @@ const esbuild = require("esbuild");
 const ROT = path.join(__dirname, "..");
 const DIST = path.join(ROT, "dist");
 const HTML_FIL = "index.html";
+const PUBLIC = path.join(ROT, "public");
 
 const les = f => fs.readFileSync(path.join(ROT, f), "utf8");
 const kb = n => (n / 1024).toFixed(1).replace(".", ",") + " kB";
@@ -90,6 +92,7 @@ async function bygg() {
 
   fs.rmSync(DIST, { recursive: true, force: true });
   fs.mkdirSync(DIST, { recursive: true });
+  if (fs.existsSync(PUBLIC)) fs.cpSync(PUBLIC, DIST, { recursive: true });
 
   const jsKilde = js.filer.map(les).join("\n");
   const jsMin = await esbuild.transform(jsKilde, {

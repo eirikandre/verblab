@@ -5,8 +5,36 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#4338ca">
 <title>VerbLab – øv på uregelrette engelske verb</title>
+<meta name="description" content="Gratis øving på uregelrette engelske verb for mellomtrinnet: lær infinitiv, preteritum og perfektum partisipp med flervalg, skriveoppgaver og et sykkelspill. Ukens verb, ingen innlogging.">
+<link rel="canonical" href="https://verblab.eidsa.no/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="VerbLab">
+<meta property="og:locale" content="nb_NO">
+<meta property="og:url" content="https://verblab.eidsa.no/">
+<meta property="og:title" content="VerbLab – øv på uregelrette engelske verb">
+<meta property="og:description" content="Lær infinitiv, preteritum og perfektum partisipp med flervalg, skriveoppgaver og et sykkelspill. Gratis, uten innlogging.">
+<meta name="twitter:card" content="summary">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "VerbLab",
+  "url": "https://verblab.eidsa.no/",
+  "description": "Øv på uregelrette engelske verb – infinitiv, preteritum og perfektum partisipp – med flervalg, skriveoppgaver og et sykkelspill.",
+  "inLanguage": "nb",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "Alle (nettleser)",
+  "isAccessibleForFree": true,
+  "educationalLevel": "Mellomtrinnet",
+  "teaches": "Uregelrette engelske verb",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "NOK" }
+}
+</script>
+
 <link rel="stylesheet" href="css/style.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='52' font-size='52'>📗</text></svg>">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body>
 
@@ -31,9 +59,12 @@
 <main id="app">
 
   <!-- ─── Hjem: denne uka øverst, så tidligere uker og ekstrapuljer ───── -->
-  <section class="screen" id="screen-hjem" hidden>
-    <h1 class="screen-title">Øv på verb</h1>
-    <p class="screen-sub">Uregelrette verb – infinitiv, preteritum og perfektum partisipp.</p>
+  <!-- Ikke hidden: forsiden er det søkemotorer og nettlesere uten js skal se.
+       app.js skjuler den straks hvis adressen peker på en annen side. -->
+  <section class="screen" id="screen-hjem">
+    <h1 class="screen-title">Øv på uregelrette engelske verb</h1>
+    <p class="screen-sub">Infinitiv, preteritum og perfektum partisipp – lær ukens verb med flervalg, skriv dem selv, eller sykle deg gjennom dem.</p>
+    <noscript><p class="panel">VerbLab trenger JavaScript for å kjøre. Slå det på i nettleseren for å begynne å øve.</p></noscript>
 
     <h2 class="section-label" id="heroLabel">Denne uka</h2>
     <div class="panel hero" id="hero"></div>

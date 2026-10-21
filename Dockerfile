@@ -9,6 +9,7 @@ RUN npm ci
 COPY index.html ./
 COPY css ./css
 COPY js ./js
+COPY public ./public
 COPY tools ./tools
 RUN npm run build
 

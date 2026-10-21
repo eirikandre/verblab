@@ -4,6 +4,9 @@
  *   node tools/serve.js           kjører kilden (npm run dev)
  *   node tools/serve.js --dist    kjører det bygde resultatet (npm run preview)
  *   PORT=3000 node tools/serve.js
+ *
+ * Kjøres kilden, hentes filer som ikke finnes i rota fra public/ – slik de
+ * ligger i dist/ etter bygget.
  */
 
 const http = require("http");
@@ -21,7 +24,9 @@ const TYPER = {
   ".json": "application/json; charset=utf-8",
   ".svg": "image/svg+xml",
   ".png": "image/png",
-  ".ico": "image/x-icon"
+  ".ico": "image/x-icon",
+  ".txt": "text/plain; charset=utf-8",
+  ".xml": "application/xml; charset=utf-8"
 };
 
 http.createServer((req, res) => {
@@ -30,10 +35,14 @@ http.createServer((req, res) => {
 
   if (!fil.startsWith(KATALOG)) { res.writeHead(403).end("403"); return; }
 
-  fs.readFile(fil, (err, data) => {
+  const publicFil = path.join(ROT, "public", rel);
+  const kilde = KATALOG === ROT && !fs.existsSync(fil) && publicFil.startsWith(path.join(ROT, "public"))
+    ? publicFil : fil;
+
+  fs.readFile(kilde, (err, data) => {
     if (err) { res.writeHead(404, { "content-type": "text/plain" }).end("404 " + rel); return; }
     res.writeHead(200, {
-      "content-type": TYPER[path.extname(fil)] || "application/octet-stream",
+      "content-type": TYPER[path.extname(kilde)] || "application/octet-stream",
       "cache-control": "no-store"
     }).end(data);
   });
