@@ -147,3 +147,8 @@ ligger det samme under **Om VerbLab** (`#om`), lenket fra bunnen av forsiden.
   Kjør `npm run dev` for å teste lokalt og `npm run build` for å sjekke at
   bygget går gjennom. Hold deg til ren HTML, CSS og JavaScript uten rammeverk.
 * **Nye verb** legges inn i `js/config.js` – se [Legge inn ukens verb](#legge-inn-ukens-verb).
+
+## Lisens
+
+[MIT](LICENSE) – du kan fritt bruke, endre og dele koden, så lenge
+lisensteksten følger med.

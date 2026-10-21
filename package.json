@@ -2,6 +2,7 @@
   "name": "verblab",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "description": "Øv på uregelrette engelske verb – ren HTML, CSS og JS",
   "scripts": {
     "dev": "node tools/serve.js",
