@@ -133,3 +133,17 @@ tools/serve.js    liten statisk server for lokal testing
 tools/og-image.html  kilden til delingsbildet public/og-image.png
 public/           kopieres som de er til dist/: robots.txt, sitemap.xml, favicon, delingsbilde
 ```
+
+## Bidra
+
+Alle bidrag er velkomne – du trenger ikke kunne kode for å hjelpe til. I appen
+ligger det samme under **Om VerbLab** (`#om`), lenket fra bunnen av forsiden.
+
+* **Fant du en feil, mangler et verb eller har en idé?**
+  [Opprett en issue](https://github.com/eirikandre/verblab/issues/new) og
+  beskriv kort hva du så eller ønsker deg. Gjelder det en feil, skriv gjerne
+  hvilken uke og hvilken modus det gjaldt, og hvilken nettleser du brukte.
+* **Vil du fikse noe selv?** Fork repoet, lag en gren, og send en pull request.
+  Kjør `npm run dev` for å teste lokalt og `npm run build` for å sjekke at
+  bygget går gjennom. Hold deg til ren HTML, CSS og JavaScript uten rammeverk.
+* **Nye verb** legges inn i `js/config.js` – se [Legge inn ukens verb](#legge-inn-ukens-verb).

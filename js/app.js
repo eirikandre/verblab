@@ -20,7 +20,7 @@
     return;
   }
 
-  const SKJERMER = ["hjem", "uke", "okt", "spill", "resultat", "fremgang", "personvern"];
+  const SKJERMER = ["hjem", "uke", "okt", "spill", "resultat", "fremgang", "om", "personvern"];
   const MODUSNAVN = { skriv: "Skrivemodus", flervalg: "Flervalg", spill: "Sykkelløypa" };
   const HINT_KOST = 0.5;   // poeng som trekkes når du bruker hint på et verb
   const MANGE_FEIL = 0.2;  // andel feil fra og med dette regnes som «mange» i neste steg
@@ -95,6 +95,7 @@
   function lesRute() {
     const h = decodeURIComponent(location.hash.replace(/^#\/?/, ""));
     if (h === "fremgang") return { skjerm: "fremgang" };
+    if (h === "om") return { skjerm: "om" };
     if (h === "personvern") return { skjerm: "personvern" };
     if (h.startsWith("uke/")) {
       const uke = UKER.find(u => u.id === h.slice(4));
